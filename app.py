@@ -12,7 +12,8 @@ app = Flask(__name__)
 habitica_api_client = HabiticaAPIClient()
 github_webhook_handler = GithubWebhookHandler(
     habitica_api_client,
-    os.environ.get('LABEL_TO_IGNORE', 'github-rpg-ignore'))
+    os.environ.get('LABEL_TO_IGNORE', 'github-rpg-ignore'),
+    os.environ.get('GITHUB_USER', 'unknowk'))
 
 
 @app.route('/', methods=['POST'])

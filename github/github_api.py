@@ -6,9 +6,10 @@ from github.github_webhook import GithubWebhook
 
 
 class GithubWebhookHandler:
-    def __init__(self, habitica_api_client, ignored_label=None):
+    def __init__(self, habitica_api_client, ignored_label=None, current_account=None):
         self.habitica_api_client = habitica_api_client
         self.ignored_label = ignored_label
+        self.current_account = current_account
 
     def handle_webhook(self, request):
         webhook = GithubWebhook.from_request(request)
@@ -25,20 +26,31 @@ class GithubWebhookHandler:
         action = request_json['action'].lower()
         issue = GithubIssueObject.from_json(request_json)
 
-        if issue.label_assigned(self.ignored_label) and action == 'labeled':
-            self.delete_task_if_exists(issue)
-        elif not issue.label_assigned(self.ignored_label) and action == 'unlabeled':
-            self.create_task_if_does_not_exists(issue)
-        elif action == 'opened':
-            self.handle_issue_opened(issue)
-        elif action == 'reopened':
-            self.handle_issue_reopenened(issue)
-        elif action == 'closed':
-            self.handle_issue_closed(issue)
-        elif action == 'edited':
-            self.handle_issue_edited(issue)
-        else:
-            logging.info(f'ignoring unhandled issues action {action}')
+        is_user_assigned = self.is_current_user_assigned(request_json['assignees'])
+
+        if is_user_assigned:  # This event is in our concern
+            if issue.label_assigned(self.ignored_label) and action == 'labeled':
+                self.delete_task_if_exists(issue)
+            elif not issue.label_assigned(self.ignored_label) and action == 'unlabeled':
+                self.create_task_if_does_not_exists(issue)
+            elif action == 'opened':
+                self.handle_issue_opened(issue)
+            elif action == 'reopened':
+                self.handle_issue_reopenened(issue)
+            elif action == 'closed':
+                self.handle_issue_closed(issue)
+            elif action == 'edited':
+                self.handle_issue_edited(issue)
+            else:
+                logging.info(f'ignoring unhandled issues action {action}')
+        else:  # We don't care of this issues
+            logging.info(f'ignoring unhandled issues action because is not assigned user{action}')
+
+    def is_current_user_assigned(self, list_of_assigned_people: list) -> bool:
+        for account in list_of_assigned_people:
+            if account['login'] == self.current_account:
+                return True
+        return False
 
     def delete_task_if_exists(self, issue):
         logging.info('ignore label is set, task will be deleted if required')

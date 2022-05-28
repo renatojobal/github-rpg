@@ -200,7 +200,7 @@ class HabiticaAPIClient:
             raise HabiticaClientIllegalResponseError()
         else:
             self._validate_status_code(status_code, response_json, missing_resource_allowed)
-
+            logging.debug(response_json)
             return response_json
 
     def _validate_status_code(self, status_code, response_json, missing_resource_allowed):
