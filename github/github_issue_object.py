@@ -5,7 +5,7 @@ from habitica.habitica_task import HabiticaTask
 
 
 class GithubIssueObject:
-    def __init__(self, number, repo_id, title, body, labels):
+    def __init__(self, number, repo_id, title, labels, body=""):
         self.github_repo_id = repo_id
         self.number = number
         self.title = title
@@ -30,11 +30,12 @@ class GithubIssueObject:
             raise GithubWebhookMalformedEventError('issues', 'missing "repository" object')
 
         return GithubIssueObject(
-            number = js['issue']['number'],
-            repo_id= js['repository']['id'],
-            title = js['issue']['title'],
-            body = js['issue'].get('body', ''),
-            labels = map(GithubIssueObject.parse_label, js['issue']['labels']))
+            number=js['issue']['number'],
+            repo_id=js['repository']['id'],
+            title=js['issue']['title'],
+            labels=map(GithubIssueObject.parse_label, js['issue']['labels']),
+            body=js['issue'].get('body', ""),
+        )
 
     @staticmethod
     def parse_label(json):
@@ -51,7 +52,9 @@ class GithubIssueObject:
         return f'repo_{github_repo_id}_issue_{number}'
 
     @staticmethod
-    def get_difficulty(body):
+    def get_difficulty(body=""):
+        if body is None:
+            return HabiticaTask.EASY_TASK
         difficulties = re.findall(r'difficulty:\s*(\w*)', body.lower())
 
         if not difficulties:

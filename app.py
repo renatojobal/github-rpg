@@ -8,12 +8,16 @@ from flask import request
 from github.github_api import GithubWebhookHandler
 from habitica.habitica_api import HabiticaAPIClient
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = Flask(__name__)
 habitica_api_client = HabiticaAPIClient()
 github_webhook_handler = GithubWebhookHandler(
     habitica_api_client,
     os.environ.get('LABEL_TO_IGNORE', 'github-rpg-ignore'),
-    os.environ.get('GITHUB_USER', 'unknowk'))
+    os.environ.get('GITHUB_USER', 'unknown'))
 
 
 @app.route('/', methods=['POST'])
@@ -24,6 +28,7 @@ def handle_github_webhook():
         print(str(e))
 
     return 'success'
+
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
